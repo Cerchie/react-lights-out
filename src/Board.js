@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Cell from "./Cell";
 import "./Board.css";
-
+import _ from "lodash";
 /** Game board of Lights out.
  *
  * Properties:
@@ -29,16 +29,26 @@ import "./Board.css";
 
 function Board({ nrows, ncols, chanceLightStartsOn }) {
   const [board, setBoard] = useState(createBoard());
-
   /** create a board nrows high/ncols wide, each cell randomly lit or unlit */
+  // e.g., 
+  // .2 0 .22
+  // .2 0 .12
+  // 0 .19 .08
   function createBoard() {
     let initialBoard = [];
-    // TODO: create array-of-arrays of true/false values
+    for (let y = 0; y < nrows; y++) {
+      let row = [];
+      for (let x = 0; x < ncols; x++) {
+        row.push(Math.random() < chanceLightStartsOn);
+        } 
+        initialBoard.push(row)
+      }
     return initialBoard;
   }
 
   function hasWon() {
-    // TODO: check the board in state to determine whether the player has won.
+    return board.every(row => row.every(cell => !cell));
+    //checks using .every method-- that the cell exists as a falsy val for every row
   }
 
   function flipCellsAround(coord) {
@@ -54,20 +64,57 @@ function Board({ nrows, ncols, chanceLightStartsOn }) {
       };
 
       // TODO: Make a (deep) copy of the oldBoard
-
+      const deepCloneOldBoard = _.cloneDeep(oldBoard);
       // TODO: in the copy, flip this cell and the cells around it
-
+      flipCell(y, x, deepCloneOldBoard);
+      flipCell(y, x + 1, deepCloneOldBoard);
+      flipCell(y, x - 1, deepCloneOldBoard);
+      flipCell(y - 1, x, deepCloneOldBoard);
+      flipCell(y + 1, x, deepCloneOldBoard);
       // TODO: return the copy
+      return deepCloneOldBoard;
     });
   }
 
   // if the game is won, just show a winning msg & render nothing else
 
+if (hasWon()) {
+  return <div>"You've won!"</div>
+}
+
   // TODO
 
   // make table board
+// make table board: rows of Cell components-- otherwise Cell and Board can't `talk` to each other
 
-  // TODO
+let tblBoard = [];
+
+for (let y = 0; y < nrows; y++) {
+  let row = [];
+  for (let x = 0; x < ncols; x++) {
+    let coord = `${y}-${x}`; //adding coord vals-- they are split on `-`
+    row.push(
+      <Cell //adding cell component to each row generated
+        key={coord} //key is coord-- smart since they don't change but are numeric
+        isLit={board[y][x]} //isLit is the board val
+        flipCellsAroundMe={() => flipCellsAround(coord)} //we flip the cells passing in the func
+      />
+    );
+  }
+  tblBoard.push(<tr key={y}>{row}</tr>); // //pushing each row created onto the table
+}
+
+return (
+  <table className="Board">
+    <tbody>{tblBoard}</tbody>
+  </table>
+);
+}
+
+Board.defaultProps = {
+  nrows : 3,
+  ncols : 3,
+  chanceLightStartsOn: .25
 }
 
 export default Board;
